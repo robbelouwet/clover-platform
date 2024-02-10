@@ -1,0 +1,3 @@
+[submodule "bicep/ResourceModules"]
+	path = bicep/ResourceModules
+	url = https://github.com/Azure/ResourceModules.git

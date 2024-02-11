@@ -111,9 +111,9 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
       globalValidation: {
         unauthenticatedClientAction: 'Return401'
       }
-      // platform: {
-      //   enabled: true
-      // }
+      platform: {
+        enabled: true
+      }
       identityProviders: {
         google: {
           enabled: true

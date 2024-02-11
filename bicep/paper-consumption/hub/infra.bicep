@@ -10,7 +10,7 @@ var defaultSubnet = '10.0.0.0/24'
 var cappEnvSubnet = '10.0.2.0/23'
 var defaultSubnetName = '${appName}-default-subnet'
 
-module vnetModule '../../ResourceModules/modules/network/virtual-network/main.bicep' = {
+module vnetModule '../../modules/network/virtual-network/main.bicep' = {
   name: '${appName}-vnet-deployment'
   params: {
     name: vnetName
@@ -29,7 +29,7 @@ module vnetModule '../../ResourceModules/modules/network/virtual-network/main.bi
   }
 }
 
-module pdnsStorageAccModule '../../ResourceModules/modules/network/private-dns-zone/main.bicep' = {
+module pdnsStorageAccModule '../../modules/network/private-dns-zone/main.bicep' = {
   name: '${appName}-storage-acc-pds-deployment'
   params: {
     name: 'privatelink.file.core.windows.net'
@@ -47,7 +47,7 @@ resource workspaceResource 'Microsoft.OperationalInsights/workspaces@2022-10-01'
   location: location
 }
 
-module storageModule '../../ResourceModules/modules/storage/storage-account/main.bicep' = {
+module storageModule '../../modules/storage/storage-account/main.bicep' = {
   name: '${appName}-storage-deployment'
   params: {
     name: storageName
@@ -87,7 +87,7 @@ module storageModule '../../ResourceModules/modules/storage/storage-account/main
   }
 }
 
-module workspaceModule '../../ResourceModules/modules/operational-insights/workspace/main.bicep' = {
+module workspaceModule '../../modules/operational-insights/workspace/main.bicep' = {
   name: '${workspaceName}-deployment'
   params: {
     name: workspaceName

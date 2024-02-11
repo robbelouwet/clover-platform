@@ -3,35 +3,45 @@ param suffix string
 param storageName string
 param paperShareName string
 param cappEnvName string
+@secure()
+param googleClientId string
+@secure()
+param googleClientSecret string
 
-var cappStorageDefName = '${appName}-velocity-storage-def'
-var cappEnvSubnetName = '${appName}-capp-env-sn-${suffix}'
-var vnetName = '${appName}-vnet-${suffix}'
-var workspaceName = '${appName}-workspace-${suffix}'
+var cappStorageDefName = 'st-def-${appName}-${suffix}'
+var cappEnvSubnetName = 'sn-env-${appName}-${suffix}'
+var vnetName = 'vnet-${appName}-${suffix}'
+var workspaceName = 'law-${appName}-${suffix}'
+var location = resourceGroup().location
 
 module networkModule 'infra.bicep' = {
-  name: '${appName}-network-${suffix}-deployment'
+  name: 'network-${appName}-${suffix}-deployment'
   params: {
+    suffix: suffix
     appName: appName
+    location: location
     cappEnvSubnetName: cappEnvSubnetName
     storageName: storageName
     vnetName: vnetName
     workspaceName: workspaceName
+    cosmosDbAccountName: 'cosmos-${appName}-${suffix}'
+    cosmosDbDatabaseName: 'cosmos-db-${appName}-${suffix}'
+    cosmosDbContainerName: 'cosmos-users-${appName}-${suffix}'
   }
 }
 
 module appModule 'app.bicep' = {
-  name: '${appName}-app-${suffix}-deployment'
+  name: 'app-${appName}-${suffix}-deployment'
   params: {
     appName: appName
+    location: location
     cappEnvName: cappEnvName
     cappEnvSubnetName: cappEnvSubnetName
-    cappStorageDefName: cappStorageDefName
-    paperShareName: paperShareName
     storageName: storageName
-    suffix: suffix
     vnetName: vnetName
     workspaceName: workspaceName
+    googleClientId: googleClientId
+    googleClientSecret: googleClientSecret
   }
   dependsOn: [ networkModule ]
 }

@@ -20,7 +20,7 @@ resource storageAccResource 'Microsoft.Storage/storageAccounts@2023-01-01' exist
   name: storageName
 }
 
-module fileShareModule '../../ResourceModules/modules/storage/storage-account/file-service/share/main.bicep' = {
+module fileShareModule '../../modules/storage/storage-account/file-service/share/main.bicep' = {
   name: '${fileShareName}-deployment'
   params: {
     name: fileShareName

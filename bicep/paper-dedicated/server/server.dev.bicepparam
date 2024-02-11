@@ -2,7 +2,7 @@ using 'server.bicep'
 
 param appName = 'paper'
 param storageName = 'paperstoragedev01'
-param servername = 'robbe3'
+param servername = 'robbe1'
 param cappEnvName = 'paper-capp-env-dev-01'
 param exposedServerPort = 30000
 

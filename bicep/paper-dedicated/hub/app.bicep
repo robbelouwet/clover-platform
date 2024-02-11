@@ -1,44 +1,40 @@
-// param workspaceName string
+param location string
+param workspaceName string
 param cappEnvName string
 param appName string
-// param suffix string
-// param vnetName string
-// param cappEnvSubnetName string
+param vnetName string
+param cappEnvSubnetName string
 param storageName string
-// param cappStorageDefName string
-// param paperShareName string
+@secure()
+param googleClientId string
+@secure()
+param googleClientSecret string
 
-var location = resourceGroup().location
-
-// resource workspaceResource 'Microsoft.OperationalInsights/workspaces@2022-10-01' existing = {
-//   name: workspaceName
-// }
-
-// resource idPaperServer 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
-//   name: '${appName}-id-paper-${suffix}'
-// }
+resource workspaceResource 'Microsoft.OperationalInsights/workspaces@2022-10-01' existing = {
+  name: workspaceName
+}
 
 resource cappEnvironment 'Microsoft.App/managedEnvironments@2022-10-01' = {
   name: cappEnvName
-  // location: location
-  // sku: { name: 'Consumption' }
-  // properties: {
-  //   appLogsConfiguration: {
-  //     destination: 'log-analytics'
-  //     logAnalyticsConfiguration: {
-  //       customerId: workspaceResource.properties.customerId
-  //       sharedKey: workspaceResource.listKeys().primarySharedKey
-  //     }
-  //   }
-  //   vnetConfiguration: {
-  //     internal: false
-  //     infrastructureSubnetId: az.resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, cappEnvSubnetName)
-  //     dockerBridgeCidr: '10.2.0.1/16'
-  //     platformReservedCidr: '10.1.0.0/16'
-  //     platformReservedDnsIP: '10.1.0.2'
-  //   }
-  // }
-  // dependsOn: [ workspaceResource ]
+  location: location
+  sku: { name: 'Consumption' }
+  properties: {
+    appLogsConfiguration: {
+      destination: 'log-analytics'
+      logAnalyticsConfiguration: {
+        customerId: workspaceResource.properties.customerId
+        sharedKey: workspaceResource.listKeys().primarySharedKey
+      }
+    }
+    vnetConfiguration: {
+      internal: false
+      infrastructureSubnetId: az.resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, cappEnvSubnetName)
+      dockerBridgeCidr: '10.2.0.1/16'
+      platformReservedCidr: '10.1.0.0/16'
+      platformReservedDnsIP: '10.1.0.2'
+    }
+  }
+  dependsOn: [ workspaceResource ]
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
@@ -48,18 +44,18 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing 
 resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
   name: '${appName}-server'
   location: location
-  // identity: {
-  //   type: 'UserAssigned'
-  //   userAssignedIdentities: {
-  //     '${idPaperServer.id}': {}
-  //   }
-  // }
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
     managedEnvironmentId: cappEnvironment.id
     configuration: {
+      secrets: [
+        {
+          name: 'google-client-secret'
+          value: googleClientSecret
+        }
+      ]
       ingress: {
         external: true
         targetPort: 5000
@@ -72,6 +68,7 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
         ]
       }
     }
+
     template: {
       containers: [
         {
@@ -105,6 +102,26 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
       scale: {
         minReplicas: 0
         maxReplicas: 1
+      }
+    }
+  }
+  resource auth 'authConfigs@2023-05-01' = {
+    name: 'current'
+    properties: {
+      globalValidation: {
+        unauthenticatedClientAction: 'Return401'
+      }
+      // platform: {
+      //   enabled: true
+      // }
+      identityProviders: {
+        google: {
+          enabled: true
+          registration: {
+            clientId: googleClientId
+            clientSecretSettingName: 'google-client-secret'
+          }
+        }
       }
     }
   }

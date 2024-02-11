@@ -1,43 +1,73 @@
 param appName string
+param suffix string
+param location string
 param workspaceName string
 param storageName string
 param vnetName string
 param cappEnvSubnetName string
+param cosmosDbAccountName string
+param cosmosDbDatabaseName string
+param cosmosDbContainerName string
 
-var location = resourceGroup().location
-
+var defaultSubnetName = 'sn-default-${appName}-${suffix}'
 var defaultSubnet = '10.0.0.0/24'
 var cappEnvSubnet = '10.0.2.0/23'
 
-module vnetModule '../../ResourceModules/modules/network/virtual-network/main.bicep' = {
-  name: '${appName}-vnet-deployment'
+module vnetModule '../../modules/network/virtual-network/main.bicep' = {
+  name: '${vnetName}-deployment'
   params: {
     name: vnetName
     location: location
     addressPrefixes: [ '10.0.0.0/16' ]
+    subnets: [
+      {
+        name: defaultSubnetName
+        addressPrefix: defaultSubnet
+      }
+      {
+        name: cappEnvSubnetName
+        addressPrefix: cappEnvSubnet
+      }
+    ]
   }
 }
 
-module cappEnvSubnetModule '../../ResourceModules/modules/network/virtual-network/subnet/main.bicep' = {
-  name: '${appName}-capp-env-subnet-deployment'
-  params: {
-    name: cappEnvSubnetName
-    addressPrefix: cappEnvSubnet
-    virtualNetworkName: vnetModule.outputs.name
+resource cosmosdb 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
+  name: cosmosDbAccountName
+  location: location
+  properties: {
+    databaseAccountOfferType: 'Standard'
+    locations: [
+      {
+        locationName: location
+      }
+    ]
   }
-  dependsOn: [ defaultSubnetModule ]
+
+  resource cosmosDbDatabase 'sqlDatabases@2023-11-15' = {
+    name: cosmosDbDatabaseName
+    properties: {
+      resource: {
+        id: cosmosDbDatabaseName
+      }
+    }
+
+    resource cosmosDbUsersContainer 'containers@2023-11-15' = {
+      name: cosmosDbContainerName
+      properties: {
+        resource: {
+          id: cosmosDbContainerName
+          partitionKey: {
+            paths: [ '/partitionkey' ]
+            kind: 'Hash'
+          }
+        }
+      }
+    }
+  }
 }
 
-module defaultSubnetModule '../../ResourceModules/modules/network/virtual-network/subnet/main.bicep' = {
-  name: '${appName}-default-subnet-deployment'
-  params: {
-    name: '${appName}-default-subnet'
-    addressPrefix: defaultSubnet
-    virtualNetworkName: vnetModule.outputs.name
-  }
-}
-
-module pdnsStorageAccModule '../../ResourceModules/modules/network/private-dns-zone/main.bicep' = {
+module pdnsStorageAccModule '../../modules/network/private-dns-zone/main.bicep' = {
   name: '${appName}-storage-acc-pds-deployment'
   params: {
     name: 'privatelink.file.core.windows.net'
@@ -55,7 +85,7 @@ module pdnsStorageAccModule '../../ResourceModules/modules/network/private-dns-z
 //   location: location
 // }
 
-module storageModule '../../ResourceModules/modules/storage/storage-account/main.bicep' = {
+module storageModule '../../modules/storage/storage-account/main.bicep' = {
   name: '${appName}-storage-deployment'
   params: {
     name: storageName
@@ -71,7 +101,7 @@ module storageModule '../../ResourceModules/modules/storage/storage-account/main
       {
         name: '${appName}-pe-storage-acc'
         service: 'file'
-        subnetResourceId: defaultSubnetModule.outputs.resourceId
+        subnetResourceId: az.resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', vnetModule.outputs.name, defaultSubnetName)
         privateDnsZoneResourceIds: [
           pdnsStorageAccModule.outputs.resourceId
         ]
@@ -87,7 +117,7 @@ module storageModule '../../ResourceModules/modules/storage/storage-account/main
   }
 }
 
-module workspaceModule '../../ResourceModules/modules/operational-insights/workspace/main.bicep' = {
+module workspaceModule '../../modules/operational-insights/workspace/main.bicep' = {
   name: '${workspaceName}-deployment'
   params: {
     name: workspaceName
@@ -95,7 +125,7 @@ module workspaceModule '../../ResourceModules/modules/operational-insights/works
   }
 }
 
-// module idPaperMcModule '../../ResourceModules/modules/managed-identity/user-assigned-identity/main.bicep' = {
+// module idPaperMcModule '../../modules/managed-identity/user-assigned-identity/main.bicep' = {
 //   name: '${appName}-id-papermc-deployment'
 //   params: {
 //     name: '${appName}-id-papermc'
@@ -103,7 +133,7 @@ module workspaceModule '../../ResourceModules/modules/operational-insights/works
 //   }
 // }
 
-// module vmHubModule '../../ResourceModules/modules/compute/virtual-machine/main.bicep' = {
+// module vmHubModule '../../modules/compute/virtual-machine/main.bicep' = {
 //   name: '${appName}-vm-deployment'
 //   params: {
 //     name: '${appName}-vm'

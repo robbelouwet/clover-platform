@@ -11,6 +11,8 @@ param vcpu string
 
 var location = resourceGroup().location
 var fileShareName = 'fs-${appName}-${servername}'
+var stDefName = 'st-def-${appName}-${servername}'
+var cappName = 'capp-${appName}-${servername}-server'
 
 resource cappEnvironment 'Microsoft.App/managedEnvironments@2023-05-01' existing = {
   name: cappEnvName
@@ -32,7 +34,7 @@ module fileShareModule '../../modules/storage/storage-account/file-service/share
 }
 
 resource storageDef 'Microsoft.App/managedEnvironments/storages@2023-05-01' = {
-  name: 'st-def-${appName}-${servername}'
+  name: stDefName
   parent: cappEnvironment
   properties: {
     azureFile: {
@@ -44,21 +46,15 @@ resource storageDef 'Microsoft.App/managedEnvironments/storages@2023-05-01' = {
   }
 }
 
-resource paperCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
-  name: 'capp-${appName}-${servername}-server'
+resource bedrockCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
+  name: cappName
   location: location
-  // identity: {
-  //   type: 'UserAssigned'
-  //   userAssignedIdentities: {
-  //     '${idPaperServer.id}': {}
-  //   }
-  // }
   properties: {
     managedEnvironmentId: cappEnvironment.id
     configuration: {
       ingress: {
         external: true
-        targetPort: 25565
+        targetPort: 19132
         exposedPort: exposedServerPort
         transport: 'Tcp'
         additionalPortMappings: [
@@ -80,14 +76,9 @@ resource paperCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
     template: {
       containers: [
         {
-          image: 'robbelouwet/paper-dedicated:latest'
+          image: 'robbelouwet/bedrock-dedicated:latest'
           name: 'server-container'
-          env: [
-            {
-              name: 'JVM_ARGS'
-              value: '-Xms${(memoryMB / 100) * 5}M -Xmx${(memoryMB / 100) * 95}M' // 5% - 95%% of container memory reserved for server process
-            }
-          ]
+
           resources: {
             cpu: json(vcpu)
             memory: '${memoryMB / 1024}Gi'
@@ -127,4 +118,9 @@ resource paperCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
   }
 }
 
-output host string = '${paperCAPP.properties.configuration.ingress.fqdn}:${paperCAPP.properties.configuration.ingress.exposedPort}'
+output host string = '${bedrockCAPP.properties.configuration.ingress.fqdn}:${bedrockCAPP.properties.configuration.ingress.exposedPort}'
+output cappName string = cappName
+output shareName string = fileShareName
+output stDefName string = stDefName
+output cappEnvName string = cappEnvName
+output stAccName string = storageName

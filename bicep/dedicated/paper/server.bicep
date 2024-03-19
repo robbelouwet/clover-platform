@@ -127,7 +127,7 @@ resource paperCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
   }
 }
 
-output host string = paperCAPP.properties.configuration.ingress.fqdn
+output host string = '${cappEnvName}.${cappEnvironment.properties.defaultDomain}'
 output cappName string = cappName
 output shareName string = fileShareName
 output stDefName string = stDefName

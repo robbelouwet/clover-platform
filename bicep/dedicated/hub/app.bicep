@@ -140,11 +140,11 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
               value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
             }
             {
-              name: 'ST_ACC_RG'
+              name: 'RG'
               value: resourceGroup().name
             }
             {
-              name: 'CAPP_ENV_NAME'
+              name: 'CAPP_ENVIRONMENT_NAME'
               value: cappEnvironment.name
             }
             {
@@ -156,7 +156,7 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
               value: 'https://${cosmosdb.name}.documents.azure.com:443/'
             }
             {
-              name: 'COSMOS_ACCOUNT_KEY'
+              name: 'COSMOS_KEY'
               value: cosmosdb.listKeys().primaryMasterKey
             }
             {
@@ -170,6 +170,10 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
             {
               name: 'COSMOS_SERVERS_CONTAINER_NAME'
               value: cosmosDbServersContainerName
+            }
+            {
+              name: 'VELOCITY_SECRET'
+              value: velocitySecret
             }
           ]
           resources: {
@@ -265,7 +269,7 @@ module pdnsModule '../../modules/network/private-dns-zone/main.bicep' = {
   name: 'pdns-${appName}-${suffix}'
   params: {
     location: 'global'
-    name: join(skip(split(cappEnvironment.properties.defaultDomain, '.'), 1), '.')
+    name: cappEnvironment.properties.defaultDomain
     a: [
       {
         name: '*'

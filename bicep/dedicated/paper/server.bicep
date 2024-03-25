@@ -4,6 +4,7 @@ param storageName string
 param cappEnvName string
 param exposedServerPort int = 25565
 param velocitySecret string
+param dnsZone string
 
 @allowed([1024, 2048, 3072, 4096])
 param memoryMB int
@@ -48,7 +49,7 @@ resource storageDef 'Microsoft.App/managedEnvironments/storages@2023-05-01' = {
 }
 
 resource paperCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
-  name: cappName
+  name: servername
   location: location
   properties: {
     managedEnvironmentId: cappEnvironment.id
@@ -127,9 +128,25 @@ resource paperCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
   }
 }
 
-output host string = '${cappEnvName}.${cappEnvironment.properties.defaultDomain}'
+resource zone 'Microsoft.Network/dnsZones@2018-05-01' existing = {
+  name: dnsZone
+}
+
+resource record 'Microsoft.Network/dnsZones/CNAME@2018-05-01' = {
+  parent: zone
+  name: servername
+  properties: {
+    TTL: 3600
+    CNAMERecord: {
+      cname: '${cappName}.${cappEnvironment.properties.defaultDomain}'
+    }
+  }
+}
+
+output host string = '${servername}.${dnsZone}'
 output cappName string = cappName
 output shareName string = fileShareName
 output stDefName string = stDefName
 output cappEnvName string = cappEnvName
 output stAccName string = storageName
+output location string = location

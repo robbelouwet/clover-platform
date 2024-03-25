@@ -9,6 +9,7 @@ param cosmosDbAccountName string
 param cosmosDbDatabaseName string
 param cosmosDbUsersContainerName string
 param cosmosDbServersContainerName string
+param dnsZone string
 param suffix string
 @secure()
 param velocitySecret string
@@ -285,6 +286,21 @@ module pdnsModule '../../modules/network/private-dns-zone/main.bicep' = {
         virtualNetworkResourceId: az.resourceId('Microsoft.Network/virtualNetworks', vnetName)
       }
     ]
+  }
+}
+
+resource zone 'Microsoft.Network/dnsZones@2018-05-01' existing = {
+  name: dnsZone
+}
+
+resource record 'Microsoft.Network/dnsZones/CNAME@2018-05-01' = {
+  parent: zone
+  name: 'app'
+  properties: {
+    TTL: 3600
+    CNAMERecord: {
+      cname: '${paperBackend.name}.${cappEnvironment.properties.defaultDomain}'
+    }
   }
 }
 

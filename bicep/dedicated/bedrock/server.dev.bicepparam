@@ -1,10 +1,9 @@
 using 'server.bicep'
 
-param appName = 'paper'
-param storageName = 'paperstoragedev01'
-param servername = 'robbe-bedrock'
-param cappEnvName = 'paper-capp-env-dev-01'
-param exposedServerPort = 30000
+param appName = 'bedrock'
+param storageName = 'paperstoragedev02'
+param servername = 'peer'
+param dnsZone = 'clover-host.com'
 
 param memoryMB = 4096
-param vcpu = '2'
+param vcpu = '1'

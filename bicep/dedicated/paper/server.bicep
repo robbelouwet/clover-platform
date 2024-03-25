@@ -138,7 +138,7 @@ resource record 'Microsoft.Network/dnsZones/CNAME@2018-05-01' = {
   properties: {
     TTL: 3600
     CNAMERecord: {
-      cname: '${cappName}.${cappEnvironment.properties.defaultDomain}'
+      cname: '${paperCAPP.name}.${cappEnvironment.properties.defaultDomain}'
     }
   }
 }

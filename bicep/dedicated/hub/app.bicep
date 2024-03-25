@@ -145,6 +145,10 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
               value: resourceGroup().name
             }
             {
+              name: 'DNS_ZONE'
+              value: dnsZone
+            }
+            {
               name: 'CAPP_ENVIRONMENT_NAME'
               value: cappEnvironment.name
             }

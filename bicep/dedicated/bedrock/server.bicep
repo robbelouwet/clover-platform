@@ -109,7 +109,7 @@ resource record 'Microsoft.Network/dnsZones/CNAME@2018-05-01' = {
 }
 
 output host string = '${servername}.${dnsZone}'
-output shareName string = fileShareName
-output stAccName string = storageName
+output shareName string = fileShareModule.outputs.name
+output stAccName string = storageAccResource.name
 output aciName string = bedrockContainerInstance.name
 output location string = location

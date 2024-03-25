@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.24.24.22086",
-      "templateHash": "13253280490846197983"
+      "templateHash": "2391148741514168587"
     }
   },
   "parameters": {
@@ -644,11 +644,11 @@
     },
     "cappName": {
       "type": "string",
-      "value": "[variables('cappName')]"
+      "value": "[parameters('servername')]"
     },
     "shareName": {
       "type": "string",
-      "value": "[variables('fileShareName')]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-deployment', variables('fileShareName'))), '2022-09-01').outputs.name.value]"
     },
     "stDefName": {
       "type": "string",

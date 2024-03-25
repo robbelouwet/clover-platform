@@ -144,9 +144,9 @@ resource record 'Microsoft.Network/dnsZones/CNAME@2018-05-01' = {
 }
 
 output host string = '${servername}.${dnsZone}'
-output cappName string = cappName
-output shareName string = fileShareName
-output stDefName string = stDefName
-output cappEnvName string = cappEnvName
-output stAccName string = storageName
+output cappName string = paperCAPP.name
+output shareName string = fileShareModule.outputs.name
+output stDefName string = storageDef.name
+output cappEnvName string = cappEnvironment.name
+output stAccName string = storageAccResource.name
 output location string = location

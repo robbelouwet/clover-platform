@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.24.24.22086",
-      "templateHash": "9536452706288564636"
+      "templateHash": "12976246996740316545"
     }
   },
   "parameters": {
@@ -602,7 +602,7 @@
     },
     "shareName": {
       "type": "string",
-      "value": "[variables('fileShareName')]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-deployment', variables('fileShareName'))), '2022-09-01').outputs.name.value]"
     },
     "stAccName": {
       "type": "string",

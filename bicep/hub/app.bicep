@@ -216,6 +216,16 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
   }
 }
 
+resource managedEnvironmentManagedCertificate 'Microsoft.App/managedEnvironments/managedCertificates@2023-05-01' = {
+  parent: cappEnvironment
+  name: '${cappEnvironment.name}-certificate'
+  location: location
+  properties: {
+    subjectName: dnsZone
+    domainControlValidation: 'TXT'
+  }
+}
+
 resource velocityCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
   name: 'velocity-${appName}-${suffix}'
   location: location
@@ -270,7 +280,7 @@ resource velocityCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
   }
 }
 
-module pdnsModule '../../modules/network/private-dns-zone/main.bicep' = {
+module pdnsModule '../modules/network/private-dns-zone/main.bicep' = {
   name: 'pdns-${appName}-${suffix}'
   params: {
     location: 'global'
@@ -290,21 +300,6 @@ module pdnsModule '../../modules/network/private-dns-zone/main.bicep' = {
         virtualNetworkResourceId: az.resourceId('Microsoft.Network/virtualNetworks', vnetName)
       }
     ]
-  }
-}
-
-resource zone 'Microsoft.Network/dnsZones@2018-05-01' existing = {
-  name: dnsZone
-}
-
-resource record 'Microsoft.Network/dnsZones/CNAME@2018-05-01' = {
-  parent: zone
-  name: 'app'
-  properties: {
-    TTL: 3600
-    CNAMERecord: {
-      cname: '${paperBackend.name}.${cappEnvironment.properties.defaultDomain}'
-    }
   }
 }
 

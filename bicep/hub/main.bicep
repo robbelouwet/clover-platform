@@ -1,8 +1,9 @@
 param appName string
 param suffix string
 param storageName string
-param paperShareName string
 param cappEnvName string
+param dnsZone string
+@secure()
 param velocitySecret string
 @secure()
 param googleClientId string
@@ -18,7 +19,7 @@ var vnetName = 'vnet-${appName}-${suffix}'
 var workspaceName = 'law-${appName}-${suffix}'
 var location = resourceGroup().location
 
-module workspaceModule '../../modules/operational-insights/workspace/main.bicep' = {
+module workspaceModule '../modules/operational-insights/workspace/main.bicep' = {
   name: '${workspaceName}-deployment'
   params: {
     name: workspaceName
@@ -26,7 +27,7 @@ module workspaceModule '../../modules/operational-insights/workspace/main.bicep'
   }
 }
 
-module vnetModule '../../modules/network/virtual-network/main.bicep' = {
+module vnetModule '../modules/network/virtual-network/main.bicep' = {
   name: '${vnetName}-deployment'
   params: {
     name: vnetName
@@ -45,7 +46,7 @@ module vnetModule '../../modules/network/virtual-network/main.bicep' = {
   }
 }
 
-module pdnsStorageAccModule '../../modules/network/private-dns-zone/main.bicep' = {
+module pdnsStorageAccModule '../modules/network/private-dns-zone/main.bicep' = {
   name: '${appName}-storage-acc-pds-deployment'
   params: {
     name: 'privatelink.file.core.windows.net'
@@ -58,7 +59,7 @@ module pdnsStorageAccModule '../../modules/network/private-dns-zone/main.bicep' 
   }
 }
 
-module storageModule '../../modules/storage/storage-account/main.bicep' = {
+module storageModule '../modules/storage/storage-account/main.bicep' = {
   name: '${appName}-storage-deployment'
   params: {
     name: storageName
@@ -89,11 +90,12 @@ module storageModule '../../modules/storage/storage-account/main.bicep' = {
   }
 }
 
-module appModule 'app.bicep' = {
+module appModule './app.bicep' = {
   name: 'app-${appName}-${suffix}-deployment'
   params: {
     appName: appName
     suffix: suffix
+    dnsZone: dnsZone
     location: location
     cappEnvName: cappEnvName
     cappEnvSubnetName: cappEnvSubnetName

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.24.24.22086",
-      "templateHash": "2391148741514168587"
+      "templateHash": "9406079293371950104"
     }
   },
   "parameters": {
@@ -161,9 +161,12 @@
       "properties": {
         "TTL": 3600,
         "CNAMERecord": {
-          "cname": "[format('{0}.{1}', variables('cappName'), reference(resourceId('Microsoft.App/managedEnvironments', parameters('cappEnvName')), '2023-05-01').defaultDomain)]"
+          "cname": "[format('{0}.{1}', parameters('servername'), reference(resourceId('Microsoft.App/managedEnvironments', parameters('cappEnvName')), '2023-05-01').defaultDomain)]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/containerApps', parameters('servername'))]"
+      ]
     },
     {
       "type": "Microsoft.Resources/deployments",

@@ -1,4 +1,4 @@
-@allowed(['java', 'bedrock'])
+@allowed(['paper', 'bedrock'])
 param appName string
 param servername string
 param storageName string
@@ -6,13 +6,13 @@ param memoryMB int
 param vcpu string
 param location string = resourceGroup().location
 param dnsZone string
-param image string = appName == 'java' ? 'robbelouwet/paper-dedicated' : 'robbelouwet/bedrock-dedicated'
 
+var image = appName == 'paper' ? 'robbelouwet/paper-dedicated' : 'robbelouwet/bedrock-dedicated'
 var fileShareName = 'fs-${appName}-${servername}'
 var aciName = 'aci-${appName}-${servername}'
 var volumeName = 'volume-${appName}-${servername}'
 
-var gameplayPort = appName == 'java' ? 25565 : 19132
+var gameplayPort = appName == 'bedrock' ? 19132 : 25565
 var consolePort = 8765
 
 resource storageAccResource 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
@@ -27,6 +27,7 @@ module fileShareModule '../modules/storage/storage-account/file-service/share/ma
     fileServicesName: 'default'
     accessTier: 'Hot'
     enabledProtocols: 'SMB'
+    shareQuota: 100
   }
 }
 
@@ -40,7 +41,7 @@ resource aciServer 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = {
       ports: [
         {
           port: gameplayPort
-          protocol: appName == 'java' ? 'TCP' : 'UDP'
+          protocol: appName == 'bedrock' ? 'UDP' : 'TCP'
         }
         {
           port: consolePort
@@ -57,7 +58,7 @@ resource aciServer 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = {
           ports: [
             {
               port: gameplayPort
-              protocol: appName == 'java' ? 'TCP' : 'UDP'
+              protocol: appName == 'bedrock' ? 'UDP' : 'TCP'
             }
             {
               port: consolePort

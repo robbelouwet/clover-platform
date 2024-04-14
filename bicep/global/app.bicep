@@ -26,28 +26,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing 
   name: storageName
 }
 
-resource cappEnvironment 'Microsoft.App/managedEnvironments@2022-10-01' = {
-  name: cappEnvName
-  location: location
-  sku: { name: 'Consumption' }
-  properties: {
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: workspaceResource.properties.customerId
-        sharedKey: workspaceResource.listKeys().primarySharedKey
-      }
-    }
-    vnetConfiguration: {
-      internal: false
-      infrastructureSubnetId: az.resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, cappEnvSubnetName)
-      dockerBridgeCidr: '10.2.0.1/16'
-      platformReservedCidr: '10.1.0.0/16'
-      platformReservedDnsIP: '10.1.0.2'
-    }
-  }
-}
-
 resource cosmosdb 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
   name: cosmosDbAccountName
   location: location
@@ -137,8 +115,20 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
           name: 'backend-container'
           env: [
             {
-              name: 'ST_ACC_CONN_STRING'
-              value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
+              name: 'D_ST_ACC_NAME'
+              value: ??
+            }
+            {
+              name: 'D_ST_ACC_CONN_STRING'
+              value: ???
+            }
+            {
+              name: 'C_ST_ACC_NAME'
+              value: ???
+            }
+            {
+              name: 'C_ST_ACC_CONN_STRING'
+              value: ???
             }
             {
               name: 'RG'
@@ -151,10 +141,6 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
             {
               name: 'CAPP_ENVIRONMENT_NAME'
               value: cappEnvironment.name
-            }
-            {
-              name: 'ST_ACC_NAME'
-              value: storageName
             }
             {
               name: 'COSMOS_ENDPOINT'
@@ -213,93 +199,6 @@ resource paperBackend 'Microsoft.App/containerapps@2023-05-02-preview' = {
         }
       }
     }
-  }
-}
-
-resource managedEnvironmentManagedCertificate 'Microsoft.App/managedEnvironments/managedCertificates@2023-05-01' = {
-  parent: cappEnvironment
-  name: '${cappEnvironment.name}-certificate'
-  location: location
-  properties: {
-    subjectName: dnsZone
-    domainControlValidation: 'TXT'
-  }
-}
-
-resource velocityCAPP 'Microsoft.App/containerapps@2023-05-02-preview' = {
-  name: 'velocity-${appName}-${suffix}'
-  location: location
-  properties: {
-    managedEnvironmentId: cappEnvironment.id
-    configuration: {
-      ingress: {
-        external: true
-        targetPort: 25565
-        transport: 'Tcp'
-        traffic: [
-          {
-            weight: 100
-            latestRevision: true
-          }
-        ]
-      }
-    }
-    template: {
-      containers: [
-        {
-          image: 'robbelouwet/velocity-dedicated:latest'
-          name: 'server-container'
-          env: [
-            {
-              name: 'VELOCITY_SECRET'
-              value: velocitySecret
-            }
-          ]
-          resources: {
-            cpu: json('0.5')
-            memory: '1Gi'
-          }
-          probes: []
-        }
-      ]
-      scale: {
-        minReplicas: 0
-        maxReplicas: 1
-        rules: [
-          {
-            name: 'tcp-scaler'
-            tcp: {
-              metadata: {
-                concurrentRequests: '1000'
-              }
-            }
-          }
-        ]
-      }
-    }
-  }
-}
-
-module pdnsModule '../modules/network/private-dns-zone/main.bicep' = {
-  name: 'pdns-${appName}-${suffix}'
-  params: {
-    location: 'global'
-    name: cappEnvironment.properties.defaultDomain
-    a: [
-      {
-        name: '*'
-        aRecords: [
-          {
-            ipv4Address: cappEnvironment.properties.staticIp
-          }
-        ]
-      }
-    ]
-    virtualNetworkLinks: [
-      {
-        virtualNetworkResourceId: az.resourceId('Microsoft.Network/virtualNetworks', vnetName)
-      }
-    ]
   }
 }
 
